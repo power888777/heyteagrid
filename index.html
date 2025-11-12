@@ -42,14 +42,14 @@
 <div class="wrap">
   <div class="card">
     <h1>喜茶杯贴流水线</h1>
-    <p class="notice">按比例缩放并居中至 596×832 白底。先做灰度 + Gamma/Contrast 预处理；再进行<strong>二值化</strong>：<strong>圆点半调</strong>、<strong>有序抖动（Bayer 8×8）</strong>、<strong>误差扩散（Floyd–Steinberg）</strong>。新增：<strong>Grid Angle</strong>、<strong>Square/Plus-Cross</strong> 形状、<strong>图片缩放</strong>。导出不透明 PNG（#000/#FFF）。</p>
+    <p class="notice">扔一张图片进来就可以秒变能印在喜茶杯贴上的格式！</p>
 
     <div class="row">
       <div class="left">
-        <label>选择或拖拽图片</label>
+        <label>导入图片</label>
         <div class="drop" id="drop">
           <input id="file" type="file" accept="image/*" />
-          <p>点击选择文件，或把图片拖进这里</p>
+          <p>点击选择，或把图片拖到这里</p>
           <small class="notice" id="fname"></small>
         </div>
 
@@ -58,70 +58,70 @@
             <div>
               <div class="top"><label>模式</label></div>
               <select id="mode">
-                <option value="circle">Circle Halftone（圆点/方形/十字）</option>
-                <option value="bayer">Ordered Dither（Bayer 8×8）</option>
-                <option value="fs">Error Diffusion（Floyd–Steinberg）</option>
+                <option value="circle">网格半调点点</option>
+                <option value="bayer">黑白平均（规整像素）</option>
+                <option value="fs">黑白平均（清晰算法）</option>
               </select>
             </div>
             <div>
-              <div class="top"><label>Image Scale（%）</label><span class="value" id="imgScaleVal">100</span></div>
+              <div class="top"><label>图像大小缩放（%）</label><span class="value" id="imgScaleVal">100</span></div>
               <input id="imgScale" type="range" min="50" max="200" step="1" value="100" />
             </div>
           </div>
 
           <div class="control cols-2" id="gridRow1">
             <div id="gridBlock">
-              <div class="top"><label>Grid Size（像素）</label><span class="value" id="gridVal">8</span></div>
-              <input id="grid" type="range" min="2" max="60" step="1" value="8" />
+              <div class="top"><label>网格大小（像素）</label><span class="value" id="gridVal">5</span></div>
+              <input id="grid" type="range" min="2" max="60" step="1" value="5" />
             </div>
             <div id="shapeBlock">
-              <div class="top"><label>Grid Shape</label></div>
+              <div class="top"><label>图案形状</label></div>
               <select id="shape">
-                <option value="circle">Circle</option>
-                <option value="square">Square</option>
-                <option value="cross">Plus-Cross</option>
+                <option value="circle">圆形</option>
+                <option value="square">方形</option>
+                <option value="cross">十字网格</option>
               </select>
             </div>
           </div>
 
           <div class="control cols-2" id="gridRow2">
             <div id="angleBlock">
-              <div class="top"><label>Grid Angle（°）</label><span class="value" id="angleVal">0</span></div>
+              <div class="top"><label>网格角度（°）</label><span class="value" id="angleVal">0</span></div>
               <input id="angle" type="range" min="-90" max="90" step="1" value="0" />
             </div>
             <div>
-              <div class="top"><label>Gamma（>1 变暗，<1 变亮）</label><span class="value" id="gammaVal">1.00</span></div>
+              <div class="top"><label>亮暗（Gamma）</label><span class="value" id="gammaVal">1.00</span></div>
               <input id="gamma" type="range" min="0.20" max="3.00" step="0.05" value="1.00" />
             </div>
           </div>
 
           <div class="control" id="fsBlock">
-            <label><input type="checkbox" id="fsSerpentine" checked /> Floyd–Steinberg 蛇形扫描（关=单向 L→R）</label>
+            <label><input type="checkbox" id="fsSerpentine" checked /> 误差扩散扫描：蛇形（关=单向）</label>
           </div>
 
           <div class="control cols-2">
             <div>
-              <div class="top"><label>Contrast（-100…+100）</label><span class="value" id="contrastVal">0</span></div>
+              <div class="top"><label>对比度（-100…+100）</label><span class="value" id="contrastVal">0</span></div>
               <input id="contrast" type="range" min="-100" max="100" step="1" value="0" />
             </div>
             <div>
-              <div class="top"><label><input type="checkbox" id="edgeProtect" /> 边缘保护（只加黑，不漂白）</label></div>
+              <div class="top"><label><input type="checkbox" id="edgeProtect" /> 边缘保护（感觉图片模糊选这里！）</label></div>
               <div class="cols-2" id="edgeGroup">
                 <div>
-                  <div class="top"><label>低阈值 Lo</label><span class="value" id="loVal">40</span></div>
+                  <div class="top"><label>更黑阈值 (Lo)</label><span class="value" id="loVal">40</span></div>
                   <input id="lo" type="range" min="0" max="255" step="1" value="40" />
                 </div>
                 <div>
-                  <div class="top"><label>高阈值 Hi</label><span class="value" id="hiVal">215</span></div>
-                  <input id="hi" type="range" min="0" max="255" step="1" value="215" />
+                  <div class="top"><label>更白阈值 (Hi)</label><span class="value" id="hiVal">120</span></div>
+                  <input id="hi" type="range" min="0" max="255" step="1" value="120" />
                 </div>
                 <div>
-                  <div class="top"><label>边缘 τ</label><span class="value" id="tauVal">60</span></div>
+                  <div class="top"><label>边缘灵敏度</label><span class="value" id="tauVal">60</span></div>
                   <input id="tau" type="range" min="0" max="255" step="1" value="60" />
                 </div>
                 <div>
-                  <div class="top"><label>Edge Dilate（px）</label><span class="value" id="dilateVal">1</span></div>
-                  <input id="dilate" type="range" min="0" max="3" step="1" value="1" />
+                  <div class="top"><label>边缘加粗（像素）</label><span class="value" id="dilateVal">0</span></div>
+                  <input id="dilate" type="range" min="0" max="3" step="1" value="0" />
                 </div>
               </div>
             </div>
@@ -129,21 +129,16 @@
         </div>
 
         <div class="actions">
-          <button id="renderBtn">重新渲染</button>
-          <button id="dlPng" disabled>下载 PNG</button>
+          <button id="renderBtn">更新预览</button>
+          <button id="dlPng" disabled>下载PNG</button>
           <button id="runTests" title="运行内置自检">自检</button>
           <button id="clearBtn" style="margin-left:auto;">清空</button>
         </div>
-        <p class="meta">提示：
-          - 覆盖满画布：提高 Image Scale（>100%）。
-          - 网格旋转仅作用于半调格（Bayer/FS 不使用角度与形状）。
-          - 文字/线稿：优先 FS；点阵风格：Circle/Square/Cross。
-          - 高亮区域交给算法，不再强制漂白；可用 Edge Dilate 巩固黑边（0–3px）。
-        </p>
+        <p class="meta"></p>
       </div>
 
       <div class="right">
-        <label>预览</label>
+        <label>预览（缩小显示）</label>
         <div class="preview">
           <canvas id="canvas" width="596" height="832"></canvas>
         </div>
@@ -590,18 +585,25 @@ document.getElementById('runTests').addEventListener('click', runSelfTests);
 drop.addEventListener('click', () => fileInput.click());
 drop.addEventListener('dragover', e => { e.preventDefault(); drop.classList.add('drag'); });
 drop.addEventListener('dragleave', () => drop.classList.remove('drag'));
-drop.addEventListener('drop', e => {
+drop.addEventListener('drop', async e => {
   e.preventDefault();
   drop.classList.remove('drag');
   if (e.dataTransfer.files && e.dataTransfer.files[0]) {
     currentFile = e.dataTransfer.files[0];
     fname.textContent = currentFile.name;
+    if (lastBitmap && lastBitmap.close) { try { lastBitmap.close(); } catch(e){} }
+    lastBitmap = await fileToBitmap(currentFile);
+    renderAll();
   }
 });
 
-fileInput.addEventListener('change', e => {
+fileInput.addEventListener('change', async e => {
   currentFile = e.target.files[0] || null;
   fname.textContent = currentFile ? currentFile.name : '';
+  if (!currentFile) return;
+  if (lastBitmap && lastBitmap.close) { try { lastBitmap.close(); } catch(e){} }
+  lastBitmap = await fileToBitmap(currentFile);
+  renderAll();
 });
 
 renderBtn.addEventListener('click', async () => {
