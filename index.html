@@ -1,641 +1,895 @@
 <!DOCTYPE html>
 <html lang="zh-CN">
+
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <title>喜茶杯贴流水线</title>
+  <title>喜茶杯贴小助手</title>
   <style>
-    :root { --w: 596; --h: 832; --zoom: 0.60; }
-    * { box-sizing: border-box; }
-    body { font-family: system-ui, -apple-system, Segoe UI, Roboto, PingFang SC, Noto Sans SC, "Helvetica Neue", Arial; margin: 0; background: #0b0f14; color: #e6e7e8; }
-    .wrap { max-width: 1100px; margin: 24px auto; padding: 16px; }
-    .card { background: #11161c; border: 1px solid #1f2630; border-radius: 16px; padding: 16px; box-shadow: 0 6px 24px rgba(0,0,0,.35); }
-    h1 { font-size: 20px; margin: 0 0 8px; }
-    .notice { font-size: 12px; color: #9ca3af; }
-    .row { display: flex; gap: 16px; flex-wrap: wrap; align-items: flex-start; }
-    .left { flex: 1 1 480px; min-width: 380px; }
-    .right { flex: 1 1 360px; min-width: 320px; }
-    .drop { border: 2px dashed #334155; border-radius: 12px; padding: 24px; text-align: center; cursor: pointer; transition: border-color .2s, background .2s; }
-    .drop.drag { border-color: #60a5fa; background: rgba(96,165,250,.1); }
-    .drop input { display: none; }
-    label { font-size: 13px; color: #9ca3af; }
-    .controls { display: grid; grid-template-columns: 1fr; gap: 14px; margin-top: 14px; }
-    .control { background: #0e141b; border: 1px solid #1f2630; padding: 10px 12px; border-radius: 10px; }
-    .control .top { display:flex; justify-content: space-between; align-items: center; margin-bottom: 6px; }
-    .cols-2 { display:grid; grid-template-columns: 1fr 1fr; gap: 10px; }
-    .cols-3 { display:grid; grid-template-columns: 1fr 1fr 1fr; gap: 10px; }
-    .cols-4 { display:grid; grid-template-columns: 1fr 1fr 1fr 1fr; gap: 10px; }
-    .value { font-variant-numeric: tabular-nums; color:#e5e7eb; }
-    input[type="range"], select { width: 100%; }
-    button { padding: 10px 14px; border: 1px solid #334155; background: #1f2937; color: #eee; border-radius: 10px; cursor: pointer; }
-    button:disabled { opacity: .5; cursor: not-allowed; }
-    .actions { display:flex; gap:8px; margin-top:14px; align-items: center; flex-wrap: wrap; }
-    .preview { background: #0a0a0a; padding: 12px; border-radius: 12px; border: 1px solid #1f2630; }
-    canvas { width: calc(var(--w) * var(--zoom) * 1px); height: calc(var(--h) * var(--zoom) * 1px); border-radius: 8px; background: #fff; image-rendering: -webkit-optimize-contrast; image-rendering: pixelated; }
-    .meta { font-size: 12px; color: #94a3b8; margin-top: 8px; }
-    .hidden { display: none; }
-    .ok { color: #22c55e; }
-    .fail { color: #ef4444; }
+    :root {
+      --w: 596;
+      --h: 832;
+      --zoom: 0.45;
+    }
+
+    * {
+      box-sizing: border-box;
+    }
+
+    body {
+      font-family: system-ui, -apple-system, Segoe UI, Roboto, PingFang SC, Noto Sans SC, "Helvetica Neue", Arial;
+      margin: 0;
+      background: rgb(23, 27, 38);
+      color: #ffffff;
+    }
+
+    .wrap {
+      max-width: 1200px;
+      margin: 24px auto;
+      padding: 16px;
+    }
+
+    .card {
+      background: #11161c;
+      border: 1px solid #1f2630;
+      padding: 16px;
+      box-shadow: 0 6px 24px rgba(0, 0, 0, .35);
+    }
+
+    h1 {
+      font-size: 24px;
+      margin: 0 0 -8px;
+    }
+
+    .notice {
+      font-size: 14px;
+      color: #9ca3af;
+    }
+
+    .row {
+      display: flex;
+      gap: 16px;
+      flex-wrap: wrap;
+      align-items: flex-start;
+    }
+
+    .left {
+      flex: 1 1 480px;
+      min-width: 380px;
+    }
+
+    .right {
+      flex: 1 1 345px;
+      min-width: 450px;
+    }
+
+    .previews {
+      display: flex;
+      gap: 12px;
+      flex-wrap: nowrap;
+      align-items: flex-start;
+    }
+
+    .preview-item {
+      flex: 0 0 auto;
+    }
+
+    .drop {
+      border: 2px dashed #334155;
+      text-align: center;
+      cursor: pointer;
+
+      transition: border-color .2s, background .2s;
+    }
+
+    .drop.drag {
+      border-color: #60a5fa;
+      background: rgba(96, 165, 250, .1);
+    }
+
+    .drop input {
+      display: none;
+    }
+
+    label {
+      font-size: 13px;
+      color: #b3b8c1;
+
+    }
+
+    .control {
+      background: #0e141b;
+      border: 1px solid #1f2630;
+      padding: 14px;
+      margin-top: 14px;
+    }
+
+    .control-grid {
+      display: grid;
+      grid-template-columns: 1fr;
+      gap: 14px;
+    }
+
+    #edgeGroup {
+      display: grid;
+      gap: 10px;
+      margin-top: 8px;
+    }
+
+    .control .top {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 6px;
+    }
+
+    .cols-2 {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 10px;
+    }
+
+    .cols-3 {
+      display: grid;
+      grid-template-columns: 1fr 1fr 1fr;
+      gap: 10px;
+    }
+
+    .cols-4 {
+      display: grid;
+      grid-template-columns: 1fr 1fr 1fr 1fr;
+      gap: 10px;
+    }
+
+    .value {
+      font-variant-numeric: tabular-nums;
+      color: #e5e7eb;
+    }
+
+    input[type="range"],
+    select {
+      width: 100%;
+    }
+
+    button {
+      padding: 10px 14px;
+      border: 1px solid #334155;
+      background: #1f2937;
+      color: #eee;
+      cursor: pointer;
+    }
+
+    button:disabled {
+      opacity: .5;
+      cursor: not-allowed;
+    }
+
+    .actions {
+      display: flex;
+      gap: 8px;
+      margin-top: 14px;
+      align-items: center;
+      flex-wrap: wrap;
+    }
+
+    .preview {
+      background: #11161c;
+      padding: 12px;
+      border: 1px solid #2a3441;
+      box-shadow: inset 0 1px 3px rgba(0, 0, 0, 0.3);
+    }
+
+    .preview-label {
+      font-size: 12px;
+      color: #9ca3af;
+      margin-bottom: 8px;
+      font-weight: 500;
+    }
+
+    canvas {
+      border-radius: 6px;
+      image-rendering: -webkit-optimize-contrast;
+      image-rendering: pixelated;
+      display: block;
+      border: 1px solid #1a1f27;
+    }
+
+    #canvas {
+      width: calc(var(--w) * var(--zoom) * 1px);
+      height: calc(var(--h) * var(--zoom) * 1px);
+      background: #fff;
+    }
+
+    #canvasDown {
+      width: calc(360 * var(--zoom) * 1px);
+      height: calc(760 * var(--zoom) * 1px);
+      background: #eaeaea;
+    }
+
+    .meta {
+      font-size: 12px;
+      color: #94a3b8;
+      margin-top: 8px;
+    }
+
+    .hidden {
+      display: none;
+    }
+
+    .ok {
+      color: #22c55e;
+    }
+
+    .fail {
+      color: #ef4444;
+    }
   </style>
 </head>
+
 <body>
-<div class="wrap">
-  <div class="card">
-    <h1>喜茶杯贴流水线</h1>
-    <p class="notice">扔一张图片进来就可以秒变能印在喜茶杯贴上的格式！</p>
+  <div class="wrap">
+    <div class="card">
+      <h1>喜茶杯贴小助手</h1>
+      <p class="notice">放一张图片进来就能秒变能印在喜茶杯贴上的黑白格式！关于如何上传，请在小红书查找相关的工具和教程哦</p>
 
-    <div class="row">
-      <div class="left">
-        <label>导入图片</label>
-        <div class="drop" id="drop">
-          <input id="file" type="file" accept="image/*" />
-          <p>点击选择，或把图片拖到这里</p>
-          <small class="notice" id="fname"></small>
-        </div>
-
-        <div class="controls">
-          <div class="control cols-2">
-            <div>
-              <div class="top"><label>模式</label></div>
-              <select id="mode">
-                <option value="circle">网格半调点点</option>
-                <option value="bayer">黑白平均（规整像素）</option>
-                <option value="fs">黑白平均（清晰算法）</option>
-              </select>
-            </div>
-            <div>
-              <div class="top"><label>图像大小缩放（%）</label><span class="value" id="imgScaleVal">100</span></div>
-              <input id="imgScale" type="range" min="50" max="200" step="1" value="100" />
-            </div>
+      <div class="row">
+        <div class="left">
+          <div class="drop" id="drop">
+            <input id="file" type="file" accept="image/*" />
+            <p>点击选择文件，或把图片拖到这里</p>
+            <small class="notice" id="fname"></small>
           </div>
 
-          <div class="control cols-2" id="gridRow1">
-            <div id="gridBlock">
-              <div class="top"><label>网格大小（像素）</label><span class="value" id="gridVal">5</span></div>
-              <input id="grid" type="range" min="2" max="60" step="1" value="5" />
-            </div>
-            <div id="shapeBlock">
-              <div class="top"><label>图案形状</label></div>
-              <select id="shape">
-                <option value="circle">圆形</option>
-                <option value="square">方形</option>
-                <option value="cross">十字网格</option>
-              </select>
-            </div>
-          </div>
-
-          <div class="control cols-2" id="gridRow2">
-            <div id="angleBlock">
-              <div class="top"><label>网格角度（°）</label><span class="value" id="angleVal">0</span></div>
-              <input id="angle" type="range" min="-90" max="90" step="1" value="0" />
-            </div>
-            <div>
-              <div class="top"><label>亮暗（Gamma）</label><span class="value" id="gammaVal">1.00</span></div>
-              <input id="gamma" type="range" min="0.20" max="3.00" step="0.05" value="1.00" />
-            </div>
-          </div>
-
-          <div class="control" id="fsBlock">
-            <label><input type="checkbox" id="fsSerpentine" checked /> 误差扩散扫描：蛇形（关=单向）</label>
-          </div>
-
-          <div class="control cols-2">
-            <div>
-              <div class="top"><label>对比度（-100…+100）</label><span class="value" id="contrastVal">0</span></div>
-              <input id="contrast" type="range" min="-100" max="100" step="1" value="0" />
-            </div>
-            <div>
-              <div class="top"><label><input type="checkbox" id="edgeProtect" /> 边缘保护（感觉图片模糊选这里！）</label></div>
-              <div class="cols-2" id="edgeGroup">
+          <div class="control">
+            <div class="control-grid">
+              <div class="cols-2">
                 <div>
-                  <div class="top"><label>更黑阈值 (Lo)</label><span class="value" id="loVal">40</span></div>
-                  <input id="lo" type="range" min="0" max="255" step="1" value="40" />
+                  <div class="top"><label>模式</label></div>
+                  <select id="mode">
+                    <option value="circle">网格半调点点</option>
+                    <option value="bayer">黑白平均（规整像素）</option>
+                    <option value="fs">黑白平均（清晰算法）</option>
+                  </select>
                 </div>
                 <div>
-                  <div class="top"><label>更白阈值 (Hi)</label><span class="value" id="hiVal">120</span></div>
-                  <input id="hi" type="range" min="0" max="255" step="1" value="120" />
+                  <div class="top"><label>图像大小缩放（%）</label><span class="value" id="imgScaleVal">100</span></div>
+                  <input id="imgScale" type="range" min="25" max="300" step="1" value="100" />
+                </div>
+              </div>
+
+              <div class="cols-2" id="gridRow1">
+                <div id="shapeBlock">
+                  <div class="top"><label>图案形状</label></div>
+                  <select id="shape">
+                    <option value="circle">圆形</option>
+                    <option value="square">方形</option>
+                    <option value="cross">十字网格</option>
+                  </select>
+                </div>
+                <div id="gridBlock">
+                  <div class="top"><label>网格大小（像素）</label><span class="value" id="gridVal">4</span></div>
+                  <input id="grid" type="range" min="2" max="16" step="1" value="4" />
+                </div>
+              </div>
+
+              <div class="cols-2" id="gridRow2">
+                <div id="angleBlock">
+                  <div class="top"><label>网格角度（°）</label><span class="value" id="angleVal">45</span></div>
+                  <input id="angle" type="range" min="0" max="90" step="1" value="45" />
                 </div>
                 <div>
-                  <div class="top"><label>边缘灵敏度</label><span class="value" id="tauVal">60</span></div>
-                  <input id="tau" type="range" min="0" max="255" step="1" value="60" />
+                  <div class="top"><label>亮暗（Gamma）</label><span class="value" id="gammaVal">1.00</span></div>
+                  <input id="gamma" type="range" min="0.20" max="3.00" step="0.01" value="1.00" />
                 </div>
-                <div>
-                  <div class="top"><label>边缘加粗（像素）</label><span class="value" id="dilateVal">0</span></div>
-                  <input id="dilate" type="range" min="0" max="3" step="1" value="0" />
+              </div>
+
+              <div id="fsBlock">
+                <label><input type="checkbox" id="fsSerpentine" checked /> 误差扩散扫描：蛇形（关=单向）</label>
+              </div>
+
+              <div>
+                <div class="top"><label>对比度</label><span class="value" id="contrastVal">0</span></div>
+                <input id="contrast" type="range" min="-100" max="100" step="1" value="0" />
+              </div>
+
+              <div>
+                <div class="top"><label><input type="checkbox" id="edgeProtect" /> 边缘保护（感觉图片模糊选这里！）</label></div>
+                <div id="edgeGroup">
+                  <div class="cols-2">
+                    <div>
+                      <div class="top"><label>更黑阈值 (Lo)</label><span class="value" id="loVal">40</span></div>
+                      <input id="lo" type="range" min="0" max="255" step="1" value="40" />
+                    </div>
+                    <div>
+                      <div class="top"><label>更白阈值 (Hi)</label><span class="value" id="hiVal">120</span></div>
+                      <input id="hi" type="range" min="0" max="255" step="1" value="120" />
+                    </div>
+                  </div>
+                  <div class="cols-2">
+                    <div>
+                      <div class="top"><label>边缘灵敏度</label><span class="value" id="tauVal">60</span></div>
+                      <input id="tau" type="range" min="0" max="255" step="1" value="60" />
+                    </div>
+                    <div>
+                      <div class="top"><label>边缘加粗（像素）</label><span class="value" id="dilateVal">0</span></div>
+                      <input id="dilate" type="range" min="0" max="3" step="1" value="0" />
+                    </div>
+                  </div>
                 </div>
               </div>
             </div>
           </div>
+
+          <div class="actions">
+            <button id="dlPng" disabled>我调好啦，下载PNG图片</button>
+            <button id="clearBtn" style="margin-left:auto;">清空</button>
+          </div>
+          <p class="meta"></p>
         </div>
 
-        <div class="actions">
-          <button id="renderBtn">更新预览</button>
-          <button id="dlPng" disabled>下载PNG</button>
-          <button id="runTests" title="运行内置自检">自检</button>
-          <button id="clearBtn" style="margin-left:auto;">清空</button>
+        <div class="right">
+          <div class="previews">
+            <div class="preview-item">
+              <div class="preview">
+                <div class="preview-label">图像预览</div>
+                <canvas id="canvas" width="596" height="832"></canvas>
+              </div>
+            </div>
+            <div class="preview-item">
+              <div class="preview">
+                <div class="preview-label">实际打印效果预览</div>
+                <div class="preview-label">红色区域为出血线</div>
+                <canvas id="canvasDown" width="360" height="760"></canvas>
+              </div>
+            </div>
+          </div>
+          <div class="meta" id="info"></div>
         </div>
-        <p class="meta"></p>
-      </div>
-
-      <div class="right">
-        <label>预览（缩小显示）</label>
-        <div class="preview">
-          <canvas id="canvas" width="596" height="832"></canvas>
-        </div>
-        <div class="meta" id="info"></div>
-        <div class="meta" id="testResults"></div>
       </div>
     </div>
   </div>
-</div>
 
-<script>
-// ======== 常量与元素 ========
-const W = 596, H = 832;
-const fileInput = document.getElementById('file');
-const drop = document.getElementById('drop');
-const fname = document.getElementById('fname');
-const canvas = document.getElementById('canvas');
-const ctx = canvas.getContext('2d');
-ctx.imageSmoothingEnabled = true;
-ctx.imageSmoothingQuality = 'high';
-const renderBtn = document.getElementById('renderBtn');
-const dlPng = document.getElementById('dlPng');
-const clearBtn = document.getElementById('clearBtn');
-const info = document.getElementById('info');
-const testResults = document.getElementById('testResults');
+  <script>
+    // ======== 常量与元素 ========
+    const W = 596, H = 832;
+    const fileInput = document.getElementById('file');
+    const drop = document.getElementById('drop');
+    const fname = document.getElementById('fname');
+    const canvas = document.getElementById('canvas');
+    const ctx = canvas.getContext('2d');
+    ctx.imageSmoothingEnabled = true;
+    ctx.imageSmoothingQuality = 'high';
+    const canvasDown = document.getElementById('canvasDown');
+    const ctxDown = canvasDown.getContext('2d');
+    const dlPng = document.getElementById('dlPng');
+    const clearBtn = document.getElementById('clearBtn');
+    const info = document.getElementById('info');
 
-const mode = document.getElementById('mode');
-const gridBlock = document.getElementById('gridBlock');
-const shapeBlock = document.getElementById('shapeBlock');
-const angleBlock = document.getElementById('angleBlock');
-const grid = document.getElementById('grid');
-const shape = document.getElementById('shape');
-const angle = document.getElementById('angle');
-const gamma = document.getElementById('gamma');
-const contrast = document.getElementById('contrast');
-const imgScale = document.getElementById('imgScale');
+    const mode = document.getElementById('mode');
+    const gridBlock = document.getElementById('gridBlock');
+    const shapeBlock = document.getElementById('shapeBlock');
+    const angleBlock = document.getElementById('angleBlock');
+    const grid = document.getElementById('grid');
+    const shape = document.getElementById('shape');
+    const angle = document.getElementById('angle');
+    const gamma = document.getElementById('gamma');
+    const contrast = document.getElementById('contrast');
+    const imgScale = document.getElementById('imgScale');
 
-const gridVal = document.getElementById('gridVal');
-const angleVal = document.getElementById('angleVal');
-const gammaVal = document.getElementById('gammaVal');
-const contrastVal = document.getElementById('contrastVal');
-const imgScaleVal = document.getElementById('imgScaleVal');
+    const gridVal = document.getElementById('gridVal');
+    const angleVal = document.getElementById('angleVal');
+    const gammaVal = document.getElementById('gammaVal');
+    const contrastVal = document.getElementById('contrastVal');
+    const imgScaleVal = document.getElementById('imgScaleVal');
 
-const edgeProtect = document.getElementById('edgeProtect');
-const edgeGroup = document.getElementById('edgeGroup');
-const lo = document.getElementById('lo');
-const hi = document.getElementById('hi');
-const tau = document.getElementById('tau');
-const loVal = document.getElementById('loVal');
-const hiVal = document.getElementById('hiVal');
-const tauVal = document.getElementById('tauVal');
-const dilate = document.getElementById('dilate');
-const dilateVal = document.getElementById('dilateVal');
+    const edgeProtect = document.getElementById('edgeProtect');
+    const edgeGroup = document.getElementById('edgeGroup');
+    const lo = document.getElementById('lo');
+    const hi = document.getElementById('hi');
+    const tau = document.getElementById('tau');
+    const loVal = document.getElementById('loVal');
+    const hiVal = document.getElementById('hiVal');
+    const tauVal = document.getElementById('tauVal');
+    const dilate = document.getElementById('dilate');
+    const dilateVal = document.getElementById('dilateVal');
 
-const fsBlock = document.getElementById('fsBlock');
-const fsSerpentine = document.getElementById('fsSerpentine');
+    const fsBlock = document.getElementById('fsBlock');
+    const fsSerpentine = document.getElementById('fsSerpentine');
 
-let currentFile = null;
-let lastBitmap = null;
+    let currentFile = null;
+    let lastBitmap = null;
 
-// 用于像素处理的离屏画布
-const buf = document.createElement('canvas');
-buf.width = W; buf.height = H;
-const bctx = buf.getContext('2d', { willReadFrequently: true });
+    // 用于像素处理的离屏画布
+    const buf = document.createElement('canvas');
+    buf.width = W; buf.height = H;
+    const bctx = buf.getContext('2d', { willReadFrequently: true });
 
-function setButtons(enabled) { dlPng.disabled = !enabled; }
+    function setButtons(enabled) { dlPng.disabled = !enabled; }
 
-function showInfo(imgW, imgH, realScale) {
-  const outW = Math.round(imgW * realScale);
-  const outH = Math.round(imgH * realScale);
-  const extra = (mode.value==='circle')
-    ? `，Grid=${grid.value}px，Shape=${shape.value}，Angle=${angle.value}°`
-    : (mode.value==='fs') ? `，FS serpentine=${fsSerpentine.checked}` : '';
-  const edgeTxt = edgeProtect.checked ? `，Edge[Lo=${lo.value},Hi=${hi.value},τ=${tau.value},Dilate=${dilate.value}]` : '';
-  info.textContent = `原图：${imgW}×${imgH}，缩放：×${realScale.toFixed(4)}（UI=${imgScale.value}%），放入：${outW}×${outH}；Mode=${mode.value}${extra}；Gamma=${Number(gamma.value).toFixed(2)}，Contrast=${contrast.value}${edgeTxt}`;
-}
-
-async function fileToBitmap(file) {
-  try { return await createImageBitmap(file, { imageOrientation: 'from-image' }); }
-  catch(e){
-    return await new Promise((resolve, reject) => {
-      const url = URL.createObjectURL(file);
-      const img = new Image();
-      img.onload = () => { URL.revokeObjectURL(url); resolve(img); };
-      img.onerror = reject; img.src = url;
-    });
-  }
-}
-
-function drawScaledToBuffer(bitmap) {
-  const imgW = bitmap.width, imgH = bitmap.height;
-  const base = Math.min(W / imgW, H / imgH);
-  const factor = parseInt(imgScale.value,10) / 100; // 0.5~2.0
-  const scale = base * factor;
-  const newW = imgW * scale;
-  const newH = imgH * scale;
-  const offsetX = (W - newW) / 2;
-  const offsetY = (H - newH) / 2;
-
-  bctx.save();
-  bctx.setTransform(1,0,0,1,0,0);
-  bctx.fillStyle = '#fff';
-  bctx.fillRect(0,0,W,H);
-  bctx.imageSmoothingEnabled = true;
-  bctx.imageSmoothingQuality = 'high';
-  bctx.drawImage(bitmap, offsetX, offsetY, newW, newH);
-  bctx.restore();
-
-  return { imgW, imgH, realScale: scale };
-}
-
-function toGrayscale() {
-  const imgData = bctx.getImageData(0,0,W,H);
-  const src = imgData.data;
-  const gray = new Uint8ClampedArray(W * H);
-  for (let i = 0, p = 0; i < src.length; i += 4, p++) {
-    const r = src[i], g = src[i+1], b = src[i+2];
-    gray[p] = Math.round(0.299*r + 0.587*g + 0.114*b);
-  }
-  return gray;
-}
-
-function applyGammaContrast(gray, cont, gam) {
-  const c = Math.max(-100, Math.min(100, cont));
-  const f = (259 * (c + 255)) / (255 * (259 - c));
-  const g = Math.max(0.2, Math.min(3.0, gam));
-  for (let i = 0; i < gray.length; i++) {
-    let v = gray[i];
-    v = f * (v - 128) + 128; // contrast
-    v = Math.min(255, Math.max(0, v));
-    let n = v / 255;
-    n = Math.pow(n, g); // gamma
-    gray[i] = Math.min(255, Math.max(0, Math.round(n * 255)));
-  }
-}
-
-// Sobel 边缘幅值（0..255）
-function sobelMagnitude(gray) {
-  const mag = new Uint8ClampedArray(W*H);
-  for (let y=1; y<H-1; y++){
-    for (let x=1; x<W-1; x++){
-      const i = y*W + x;
-      const im = i - W, ip = i + W;
-      const gx = -gray[im-1] + gray[im+1] - 2*gray[i-1] + 2*gray[i+1] - gray[ip-1] + gray[ip+1];
-      const gy = -gray[im-1] - 2*gray[im] - gray[im+1] + gray[ip-1] + 2*gray[ip] + gray[ip+1];
-      const a = Math.min(255, Math.abs(gx) + Math.abs(gy));
-      mag[i] = a;
+    function showInfo(imgW, imgH, realScale) {
+      const outW = Math.round(imgW * realScale);
+      const outH = Math.round(imgH * realScale);
+      let extra = '';
+      if (mode.value === 'circle') {
+        extra = `，Grid=${grid.value}px，Shape=${shape.value}，Angle=${angle.value}°`;
+      } else if (mode.value === 'fs') {
+        extra = `，FS serpentine=${fsSerpentine.checked}`;
+      }
+      const edgeTxt = edgeProtect.checked ? `，Edge[Lo=${lo.value},Hi=${hi.value},τ=${tau.value},Dilate=${dilate.value}]` : '';
+      info.textContent = `原图：${imgW}×${imgH}，缩放：×${realScale.toFixed(4)}（UI=${imgScale.value}%），放入：${outW}×${outH}；Mode=${mode.value}${extra}；Gamma=${Number(gamma.value).toFixed(2)}，Contrast=${contrast.value}${edgeTxt}`;
     }
-  }
-  return mag;
-}
 
-// 形态学膨胀：避免黑边“被侵蚀”
-function dilateMask(mask, w, h, iters=1){
-  let src = new Uint8Array(mask), dst = new Uint8Array(mask.length);
-  for (let k=0; k<iters; k++){
-    for (let y=0; y<h; y++){
-      for (let x=0; x<w; x++){
-        const idx = y*w + x;
-        if (src[idx]) { dst[idx]=1; continue; }
-        let on = 0;
-        for (let j=-1; j<=1 && !on; j++){
-          const yy = y+j; if (yy<0 || yy>=h) continue;
-          for (let i=-1; i<=1; i++){
-            const xx = x+i; if (xx<0 || xx>=w) continue;
-            if (src[yy*w+xx]) { on=1; break; }
+    async function fileToBitmap(file) {
+      try { return await createImageBitmap(file, { imageOrientation: 'from-image' }); }
+      catch (e) {
+        return await new Promise((resolve, reject) => {
+          const url = URL.createObjectURL(file);
+          const img = new Image();
+          img.onload = () => { URL.revokeObjectURL(url); resolve(img); };
+          img.onerror = reject; img.src = url;
+        });
+      }
+    }
+
+    function drawScaledToBuffer(bitmap) {
+      const imgW = bitmap.width, imgH = bitmap.height;
+      const base = Math.min(W / imgW, H / imgH);
+      const factor = parseInt(imgScale.value, 10) / 100; // 0.5~2.0
+      const scale = base * factor;
+      const newW = imgW * scale;
+      const newH = imgH * scale;
+      const offsetX = (W - newW) / 2;
+      const offsetY = (H - newH) / 2;
+
+      bctx.save();
+      bctx.setTransform(1, 0, 0, 1, 0, 0);
+      bctx.fillStyle = '#fff';
+      bctx.fillRect(0, 0, W, H);
+      bctx.imageSmoothingEnabled = true;
+      bctx.imageSmoothingQuality = 'high';
+      bctx.drawImage(bitmap, offsetX, offsetY, newW, newH);
+      bctx.restore();
+
+      return { imgW, imgH, realScale: scale };
+    }
+
+    function toGrayscale() {
+      const imgData = bctx.getImageData(0, 0, W, H);
+      const src = imgData.data;
+      const gray = new Uint8ClampedArray(W * H);
+      for (let i = 0, p = 0; i < src.length; i += 4, p++) {
+        const r = src[i], g = src[i + 1], b = src[i + 2];
+        gray[p] = Math.round(0.299 * r + 0.587 * g + 0.114 * b);
+      }
+      return gray;
+    }
+
+    function applyGammaContrast(gray, cont, gam) {
+      const c = Math.max(-100, Math.min(100, cont));
+      const f = (259 * (c + 255)) / (255 * (259 - c));
+      const g = Math.max(0.2, Math.min(3.0, gam));
+      for (let i = 0; i < gray.length; i++) {
+        let v = gray[i];
+        v = f * (v - 128) + 128; // contrast
+        v = Math.min(255, Math.max(0, v));
+        let n = v / 255;
+        n = Math.pow(n, g); // gamma
+        gray[i] = Math.min(255, Math.max(0, Math.round(n * 255)));
+      }
+    }
+
+    // Sobel 边缘幅值（0..255）
+    function sobelMagnitude(gray) {
+      const mag = new Uint8ClampedArray(W * H);
+      for (let y = 1; y < H - 1; y++) {
+        for (let x = 1; x < W - 1; x++) {
+          const i = y * W + x;
+          const im = i - W, ip = i + W;
+          const gx = -gray[im - 1] + gray[im + 1] - 2 * gray[i - 1] + 2 * gray[i + 1] - gray[ip - 1] + gray[ip + 1];
+          const gy = -gray[im - 1] - 2 * gray[im] - gray[im + 1] + gray[ip - 1] + 2 * gray[ip] + gray[ip + 1];
+          const a = Math.min(255, Math.abs(gx) + Math.abs(gy));
+          mag[i] = a;
+        }
+      }
+      return mag;
+    }
+
+    // 形态学膨胀：避免黑边“被侵蚀”
+    function dilateMask(mask, w, h, iters = 1) {
+      let src = new Uint8Array(mask), dst = new Uint8Array(mask.length);
+      for (let k = 0; k < iters; k++) {
+        for (let y = 0; y < h; y++) {
+          for (let x = 0; x < w; x++) {
+            const idx = y * w + x;
+            if (src[idx]) { dst[idx] = 1; continue; }
+            let on = 0;
+            for (let j = -1; j <= 1 && !on; j++) {
+              const yy = y + j; if (yy < 0 || yy >= h) continue;
+              for (let i = -1; i <= 1; i++) {
+                const xx = x + i; if (xx < 0 || xx >= w) continue;
+                if (src[yy * w + xx]) { on = 1; break; }
+              }
+            }
+            dst[idx] = on ? 1 : 0;
           }
         }
-        dst[idx] = on ? 1 : 0;
+        src.set(dst);
+      }
+      return src;
+    }
+
+    // 边缘保护：仅“加黑不漂白”，高亮交给算法
+    function applyPreserveOverlay(bin, gray, loT, hiT, tauT, dil = 1) {
+      const edge = sobelMagnitude(gray);
+      const blackMask = new Uint8Array(W * H);
+      for (let p = 0; p < bin.length; p++) {
+        if (gray[p] <= loT || (edge[p] >= tauT && gray[p] < hiT)) blackMask[p] = 1;
+      }
+      const black = dilateMask(blackMask, W, H, Math.max(0, dil | 0));
+      for (let p = 0; p < bin.length; p++) {
+        if (black[p]) bin[p] = 0; // 只加黑，不改白
       }
     }
-    src.set(dst);
-  }
-  return src;
-}
 
-// 边缘保护：仅“加黑不漂白”，高亮交给算法
-function applyPreserveOverlay(bin, gray, loT, hiT, tauT, dil=1){
-  const edge = sobelMagnitude(gray);
-  const blackMask = new Uint8Array(W*H);
-  for (let p=0; p<bin.length; p++){
-    if (gray[p] <= loT || (edge[p] >= tauT && gray[p] < hiT)) blackMask[p] = 1;
-  }
-  const black = dilateMask(blackMask, W, H, Math.max(0, dil|0));
-  for (let p=0; p<bin.length; p++){
-    if (black[p]) bin[p] = 0; // 只加黑，不改白
-  }
-}
+    // Bayer 8x8 阈值表（0..63）
+    const BAYER8 = [
+      [0, 32, 8, 40, 2, 34, 10, 42],
+      [48, 16, 56, 24, 50, 18, 58, 26],
+      [12, 44, 4, 36, 14, 46, 6, 38],
+      [60, 28, 52, 20, 62, 30, 54, 22],
+      [3, 35, 11, 43, 1, 33, 9, 41],
+      [51, 19, 59, 27, 49, 17, 57, 25],
+      [15, 47, 7, 39, 13, 45, 5, 37],
+      [63, 31, 55, 23, 61, 29, 53, 21],
+    ];
 
-// Bayer 8x8 阈值表（0..63）
-const BAYER8 = [
- [0,32,8,40,2,34,10,42],
- [48,16,56,24,50,18,58,26],
- [12,44,4,36,14,46,6,38],
- [60,28,52,20,62,30,54,22],
- [3,35,11,43,1,33,9,41],
- [51,19,59,27,49,17,57,25],
- [15,47,7,39,13,45,5,37],
- [63,31,55,23,61,29,53,21],
-];
-
-function ditherBayer(gray, binOut){
-  for(let y=0, p=0; y<H; y++){
-    for(let x=0; x<W; x++, p++){
-      const g = gray[p];
-      const t = (BAYER8[y&7][x&7] + 0.5) * 4; // 0..255
-      binOut[p] = (g < t) ? 0 : 255;
-    }
-  }
-}
-
-function ditherFS(gray, binOut, serpentine=true){
-  const g = new Float32Array(gray);
-  for(let y=0; y<H; y++){
-    const leftToRight = serpentine ? ((y % 2) === 0) : true;
-    const xs = leftToRight ? 0 : W-1;
-    const xe = leftToRight ? W : -1;
-    const step = leftToRight ? 1 : -1;
-    for(let x=xs; x!==xe; x+=step){
-      const p = y*W + x;
-      const old = g[p];
-      const v = old < 128 ? 0 : 255;
-      binOut[p] = v;
-      const err = old - v;
-      const xr = x + step, xl = x - step;
-      if (xr>=0 && xr<W) g[p + step] += err * 7/16;
-      const yn = y+1; if (yn<H){
-        const base = yn*W;
-        if (leftToRight){
-          if (xl>=0) g[base + x - 1] += err * 3/16;
-                      g[base + x    ] += err * 5/16;
-          if (xr<W)  g[base + x + 1] += err * 1/16;
-        } else {
-          if (xr<W)  g[base + x + 1] += err * 3/16;
-                      g[base + x    ] += err * 5/16;
-          if (xl>=0) g[base + x - 1] += err * 1/16;
+    function ditherBayer(gray, binOut) {
+      for (let y = 0, p = 0; y < H; y++) {
+        for (let x = 0; x < W; x++, p++) {
+          const g = gray[p];
+          const t = (BAYER8[y & 7][x & 7] + 0.5) * 4; // 0..255
+          binOut[p] = (g < t) ? 0 : 255;
         }
       }
     }
-  }
-}
 
-function drawCross(ctx, cx, cy, length, thick){
-  const half = length / 2, t = Math.max(1, thick / 2);
-  ctx.fillRect(cx - half, cy - t, length, thick); // 横
-  ctx.fillRect(cx - t, cy - half, thick, length); // 竖
-}
-
-function circleHalftone(gray, cell, angleDeg, shapeKind) {
-  // 基于“旋转采样晶格”的网点：只旋转采样/格坐标，不旋转整层
-  const s = Math.max(2, Math.min(60, Math.floor(cell)));
-  const theta = (angleDeg || 0) * Math.PI / 180;
-  const c = Math.cos(theta), si = Math.sin(theta);
-  const CX = W/2, CY = H/2;
-
-  // 坐标变换： (i,j) -> (x,y) 与反变换 (x,y) -> (i,j)
-  const toXY = (i,j) => [ CX + s*( i*c - j*si ), CY + s*( i*si + j*c ) ];
-  const toIJ = (x,y) => { const dx=x-CX, dy=y-CY; return [ (dx*c + dy*si)/s, (-dx*si + dy*c)/s ]; };
-
-  // 计算需要覆盖的 i/j 范围（把画布四角投到 ij 空间，取包围框）
-  const corners = [ [0,0],[W,0],[0,H],[W,H] ].map(([x,y])=>toIJ(x,y));
-  const iVals = corners.map(v=>v[0]);
-  const jVals = corners.map(v=>v[1]);
-  const iMin = Math.floor(Math.min.apply(null,iVals))-1, iMax = Math.ceil(Math.max.apply(null,iVals))+1;
-  const jMin = Math.floor(Math.min.apply(null,jVals))-1, jMax = Math.ceil(Math.max.apply(null,jVals))+1;
-
-  // 先清白底
-  ctx.save();
-  ctx.setTransform(1,0,0,1,0,0);
-  ctx.fillStyle = '#fff';
-  ctx.fillRect(0,0,W,H);
-  ctx.fillStyle = '#000';
-
-  // 在每个晶格中心周围取样（局部 3x3），用平均灰度 -> 面积（半径/边长/线宽）
-  const offsets = [-0.35, 0, 0.35];
-  const sideMax = s * 0.98;
-  for (let J=jMin; J<=jMax; J++){
-    for (let I=iMin; I<=iMax; I++){
-      // 单元中心（注意+0.5 定义单元中心）
-      const [cx, cy] = toXY(I+0.5, J+0.5);
-      if (cx < -s || cx > W + s || cy < -s || cy > H + s) continue; // 粗裁剪
-
-      // 取样平均，坐标用旋转晶格定义再映射到屏幕
-      let sum = 0, cnt = 0;
-      for (let dv of offsets){
-        for (let du of offsets){
-          const [sx, sy] = toXY(I+0.5+du, J+0.5+dv);
-          const ix = Math.max(0, Math.min(W-1, Math.round(sx)));
-          const iy = Math.max(0, Math.min(H-1, Math.round(sy)));
-          sum += gray[iy*W + ix]; cnt++;
-        }
-      }
-      const avg = sum / cnt; // 0..255
-      const darkness = 1 - (avg / 255); // 0..1
-      const radius = Math.sqrt(Math.max(0, darkness)) * (sideMax/2);
-
-      if (radius > 0.25){
-        if (shapeKind === 'square'){
-          // 方形与晶格同向：局部旋转后画
-          ctx.save(); ctx.translate(cx,cy); ctx.rotate(theta);
-          const side = Math.min(sideMax, 2*radius);
-          ctx.fillRect(-side/2, -side/2, side, side);
-          ctx.restore();
-        } else if (shapeKind === 'cross'){
-          // 十字（Plus-Cross）：与晶格同向，线宽随暗度
-          const length = sideMax;
-          const thick = Math.max(1, radius * 0.9);
-          ctx.save(); ctx.translate(cx,cy); ctx.rotate(theta);
-          ctx.fillRect(-length/2, -thick/2, length, thick); // 横
-          ctx.fillRect(-thick/2, -length/2, thick, length); // 竖
-          ctx.restore();
-        } else {
-          // 圆点与角度无关，直接画
-          ctx.beginPath();
-          ctx.arc(cx, cy, radius, 0, Math.PI*2);
-          ctx.fill();
+    function ditherFS(gray, binOut, serpentine = true) {
+      const g = new Float32Array(gray);
+      for (let y = 0; y < H; y++) {
+        const leftToRight = serpentine ? ((y % 2) === 0) : true;
+        const xs = leftToRight ? 0 : W - 1;
+        const xe = leftToRight ? W : -1;
+        const step = leftToRight ? 1 : -1;
+        for (let x = xs; x !== xe; x += step) {
+          const p = y * W + x;
+          const old = g[p];
+          const v = old < 128 ? 0 : 255;
+          binOut[p] = v;
+          const err = old - v;
+          const xr = x + step, xl = x - step;
+          if (xr >= 0 && xr < W) g[p + step] += err * 7 / 16;
+          const yn = y + 1; if (yn < H) {
+            const base = yn * W;
+            if (leftToRight) {
+              if (xl >= 0) g[base + x - 1] += err * 3 / 16;
+              g[base + x] += err * 5 / 16;
+              if (xr < W) g[base + x + 1] += err * 1 / 16;
+            } else {
+              if (xr < W) g[base + x + 1] += err * 3 / 16;
+              g[base + x] += err * 5 / 16;
+              if (xl >= 0) g[base + x - 1] += err * 1 / 16;
+            }
+          }
         }
       }
     }
-  }
-  ctx.restore();
 
-  // 强制二值化读取
-  const img = ctx.getImageData(0,0,W,H);
-  const d = img.data; const bin = new Uint8ClampedArray(W*H);
-  for (let i=0, p=0; i<d.length; i+=4, p++){
-    const yv = 0.299*d[i] + 0.587*d[i+1] + 0.114*d[i+2];
-    const v = (yv < 128) ? 0 : 255;
-    d[i]=d[i+1]=d[i+2]=v; d[i+3]=255; bin[p]=v;
-  }
-  ctx.putImageData(img,0,0);
-  return bin;
-}
-
-function binToCanvas(bin){
-  const img = ctx.createImageData(W,H); const d = img.data;
-  for (let p=0, i=0; p<bin.length; p++, i+=4){
-    const v = bin[p]; d[i]=d[i+1]=d[i+2]=v; d[i+3]=255;
-  }
-  ctx.putImageData(img,0,0);
-}
-
-function renderAll() {
-  if (!lastBitmap) return;
-  const { imgW, imgH, realScale } = drawScaledToBuffer(lastBitmap);
-  const gray = toGrayscale();
-  applyGammaContrast(gray, parseInt(contrast.value,10), parseFloat(gamma.value));
-
-  let bin;
-  if (mode.value === 'bayer'){
-    bin = new Uint8ClampedArray(W*H);
-    ditherBayer(gray, bin);
-  } else if (mode.value === 'fs'){
-    bin = new Uint8ClampedArray(W*H);
-    ditherFS(gray, bin, !!fsSerpentine.checked);
-  } else { // circle / square / cross 网格类
-    bin = circleHalftone(gray, parseInt(grid.value,10), parseInt(angle.value,10), shape.value);
-  }
-
-  if (edgeProtect.checked){
-    applyPreserveOverlay(bin, gray, parseInt(lo.value,10), parseInt(hi.value,10), parseInt(tau.value,10), parseInt(dilate.value,10));
-  }
-
-  binToCanvas(bin);
-  showInfo(imgW, imgH, realScale);
-  setButtons(true);
-}
-
-// ======== 自检：简单断言 ========
-function runSelfTests(){
-  const results = [];
-  function ok(name){ results.push(`<span class=\"ok\">✔︎ ${name}</span>`); }
-  function fail(name, e){ results.push(`<span class=\"fail\">✘ ${name}: ${e?.message||e}</span>`); }
-  try {
-    // 1) 灰度梯度
-    const gray = new Uint8ClampedArray(W*H);
-    for (let y=0; y<H; y++){
-      for (let x=0; x<W; x++) gray[y*W+x] = Math.round(255 * x / (W-1));
+    function drawCross(ctx, cx, cy, length, thick) {
+      const half = length / 2, t = Math.max(1, thick / 2);
+      ctx.fillRect(cx - half, cy - t, length, thick); // 横
+      ctx.fillRect(cx - t, cy - half, thick, length); // 竖
     }
-    // Bayer 1-bit
-    try{ const bin = new Uint8ClampedArray(W*H); ditherBayer(gray, bin); if(!bin.every(v=>v===0||v===255)) throw new Error('非 1-bit'); ok('Bayer 8×8 → 1-bit'); }catch(e){ fail('Bayer 8×8', e); }
-    // FS serpentine 1-bit
-    try{ const bin = new Uint8ClampedArray(W*H); ditherFS(gray, bin, true); if(!bin.every(v=>v===0||v===255)) throw new Error('非 1-bit'); ok('FS 蛇形 → 1-bit'); }catch(e){ fail('FS 蛇形', e); }
-    // FS 单向 1-bit
-    try{ const bin = new Uint8ClampedArray(W*H); ditherFS(gray, bin, false); if(!bin.every(v=>v===0||v===255)) throw new Error('非 1-bit'); ok('FS 单向 → 1-bit'); }catch(e){ fail('FS 单向', e); }
-    // 网格类 1-bit
-    const snap = ctx.getImageData(0,0,W,H);
-    for (const [shapeKind, name] of [["circle","Circle"],["square","Square"],["cross","Plus-Cross"]]){
-      try{ const bin = circleHalftone(gray, 10, 15, shapeKind); if(!bin.every(v=>v===0||v===255)) throw new Error('非 1-bit'); ok(`${name} Halftone → 1-bit`); }catch(e){ fail(`${name} Halftone`, e); }
+
+    function circleHalftone(gray, cell, angleDeg, shapeKind) {
+      // 基于“旋转采样晶格”的网点：只旋转采样/格坐标，不旋转整层
+      const s = Math.max(2, Math.min(60, Math.floor(cell)));
+      const theta = (angleDeg || 0) * Math.PI / 180;
+      const c = Math.cos(theta), si = Math.sin(theta);
+      const CX = W / 2, CY = H / 2;
+
+      // 坐标变换： (i,j) -> (x,y) 与反变换 (x,y) -> (i,j)
+      const toXY = (i, j) => [CX + s * (i * c - j * si), CY + s * (i * si + j * c)];
+      const toIJ = (x, y) => { const dx = x - CX, dy = y - CY; return [(dx * c + dy * si) / s, (-dx * si + dy * c) / s]; };
+
+      // 计算需要覆盖的 i/j 范围（把画布四角投到 ij 空间，取包围框）
+      const corners = [[0, 0], [W, 0], [0, H], [W, H]].map(([x, y]) => toIJ(x, y));
+      const iVals = corners.map(v => v[0]);
+      const jVals = corners.map(v => v[1]);
+      const iMin = Math.floor(Math.min.apply(null, iVals)) - 1, iMax = Math.ceil(Math.max.apply(null, iVals)) + 1;
+      const jMin = Math.floor(Math.min.apply(null, jVals)) - 1, jMax = Math.ceil(Math.max.apply(null, jVals)) + 1;
+
+      // 先清白底
+      ctx.save();
+      ctx.setTransform(1, 0, 0, 1, 0, 0);
+      ctx.fillStyle = '#fff';
+      ctx.fillRect(0, 0, W, H);
+      ctx.fillStyle = '#000';
+
+      // 在每个晶格中心周围取样（局部 3x3），用平均灰度 -> 面积（半径/边长/线宽）
+      const offsets = [-0.35, 0, 0.35];
+      const sideMax = s * 0.98;
+      for (let J = jMin; J <= jMax; J++) {
+        for (let I = iMin; I <= iMax; I++) {
+          // 单元中心（注意+0.5 定义单元中心）
+          const [cx, cy] = toXY(I + 0.5, J + 0.5);
+          if (cx < -s || cx > W + s || cy < -s || cy > H + s) continue; // 粗裁剪
+
+          // 取样平均，坐标用旋转晶格定义再映射到屏幕
+          let sum = 0, cnt = 0;
+          for (let dv of offsets) {
+            for (let du of offsets) {
+              const [sx, sy] = toXY(I + 0.5 + du, J + 0.5 + dv);
+              const ix = Math.max(0, Math.min(W - 1, Math.round(sx)));
+              const iy = Math.max(0, Math.min(H - 1, Math.round(sy)));
+              sum += gray[iy * W + ix]; cnt++;
+            }
+          }
+          const avg = sum / cnt; // 0..255
+          const darkness = 1 - (avg / 255); // 0..1
+          const radius = Math.sqrt(Math.max(0, darkness)) * (sideMax / 2);
+
+          if (radius > 0.25) {
+            if (shapeKind === 'square') {
+              // 方形与晶格同向：局部旋转后画
+              ctx.save(); ctx.translate(cx, cy); ctx.rotate(theta);
+              const side = Math.min(sideMax, 2 * radius);
+              ctx.fillRect(-side / 2, -side / 2, side, side);
+              ctx.restore();
+            } else if (shapeKind === 'cross') {
+              // 十字（Plus-Cross）：与晶格同向，线宽随暗度
+              const length = sideMax;
+              const thick = Math.max(1, radius * 0.9);
+              ctx.save(); ctx.translate(cx, cy); ctx.rotate(theta);
+              ctx.fillRect(-length / 2, -thick / 2, length, thick); // 横
+              ctx.fillRect(-thick / 2, -length / 2, thick, length); // 竖
+              ctx.restore();
+            } else {
+              // 圆点与角度无关，直接画
+              ctx.beginPath();
+              ctx.arc(cx, cy, radius, 0, Math.PI * 2);
+              ctx.fill();
+            }
+          }
+        }
+      }
+      ctx.restore();
+
+      // 强制二值化读取
+      const img = ctx.getImageData(0, 0, W, H);
+      const d = img.data; const bin = new Uint8ClampedArray(W * H);
+      for (let i = 0, p = 0; i < d.length; i += 4, p++) {
+        const yv = 0.299 * d[i] + 0.587 * d[i + 1] + 0.114 * d[i + 2];
+        const v = (yv < 128) ? 0 : 255;
+        d[i] = d[i + 1] = d[i + 2] = v; d[i + 3] = 255; bin[p] = v;
+      }
+      ctx.putImageData(img, 0, 0);
+      return bin;
     }
-    ctx.putImageData(snap,0,0);
 
-    // 2) 边缘保护非侵蚀：中心纯黑方块在开启保护后黑像素不减少
-    const gray2 = new Uint8ClampedArray(W*H).fill(255);
-    const x0=Math.floor(W*0.25), x1=Math.ceil(W*0.75), y0=Math.floor(H*0.25), y1=Math.ceil(H*0.75);
-    for (let y=y0; y<y1; y++) for (let x=x0; x<x1; x++) gray2[y*W+x]=0;
-    const base = new Uint8ClampedArray(W*H); ditherBayer(gray2, base);
-    const before = base.reduce((a,v)=>a+(v===0),0);
-    const afterArr = base.slice(); applyPreserveOverlay(afterArr, gray2, 40, 215, 60, 1);
-    const after = afterArr.reduce((a,v)=>a+(v===0),0);
-    if (after + Math.floor(W*H*0.01) < before) throw new Error(`黑像素减少: before=${before}, after=${after}`);
-    ok('边缘保护无明显侵蚀');
-  } catch(e){ fail('自检运行', e); }
-  testResults.innerHTML = results.join(' · ');
-}
+    function binToCanvas(bin) {
+      const img = ctx.createImageData(W, H); const d = img.data;
+      for (let p = 0, i = 0; p < bin.length; p++, i += 4) {
+        const v = bin[p]; d[i] = d[i + 1] = d[i + 2] = v; d[i + 3] = 255;
+      }
+      ctx.putImageData(img, 0, 0);
+    }
 
-// ======== 交互 ========
-function scheduleRender(){
-  if (!lastBitmap) return;
-  cancelAnimationFrame(scheduleRender._raf);
-  scheduleRender._raf = requestAnimationFrame(renderAll);
-}
+    // 打印机效果预览：模拟36×76mm标签贴
+    function downsamplePreview() {
+      const labelW = 360; // 标签宽度（对应36mm）
+      const labelH = 760; // 标签高度（对应76mm）
 
-[grid, shape, angle, gamma, contrast, mode, lo, hi, tau, edgeProtect, imgScale, fsSerpentine, dilate].forEach(el => {
-  el.addEventListener('input', () => {
-    gridVal.textContent = grid.value;
-    angleVal.textContent = angle.value;
-    gammaVal.textContent = Number(gamma.value).toFixed(2);
-    contrastVal.textContent = contrast.value;
-    imgScaleVal.textContent = imgScale.value;
-    loVal.textContent = lo.value; hiVal.textContent = hi.value; tauVal.textContent = tau.value; dilateVal.textContent = dilate.value;
-    const showGrid = (mode.value === 'circle');
-    gridBlock.classList.toggle('hidden', !showGrid);
-    shapeBlock.classList.toggle('hidden', !showGrid);
-    angleBlock.classList.toggle('hidden', !showGrid);
-    fsBlock.classList.toggle('hidden', mode.value !== 'fs');
-    edgeGroup.classList.toggle('hidden', !edgeProtect.checked);
-    scheduleRender();
-  });
-});
+      // 1. 绘制标签背景色 #eaeaea
+      ctxDown.fillStyle = '#eaeaea';
+      ctxDown.fillRect(0, 0, labelW, labelH);
 
-document.getElementById('runTests').addEventListener('click', runSelfTests);
+      // 2. 如果有图片，对原图进行1.01倍降采样
+      if (lastBitmap) {
+        const ratio = 1.01;
+        const dw = Math.round(W / ratio);
+        const dh = Math.round(H / ratio);
 
-// 初始化可见性
-(function initUI(){
-  const showGrid = (mode.value === 'circle');
-  gridBlock.classList.toggle('hidden', !showGrid);
-  shapeBlock.classList.toggle('hidden', !showGrid);
-  angleBlock.classList.toggle('hidden', !showGrid);
-  fsBlock.classList.toggle('hidden', mode.value !== 'fs');
-  edgeGroup.classList.toggle('hidden', !edgeProtect.checked);
-})();
+        const srcImg = ctx.getImageData(0, 0, W, H);
+        const src = srcImg.data;
 
-drop.addEventListener('click', () => fileInput.click());
-drop.addEventListener('dragover', e => { e.preventDefault(); drop.classList.add('drag'); });
-drop.addEventListener('dragleave', () => drop.classList.remove('drag'));
-drop.addEventListener('drop', async e => {
-  e.preventDefault();
-  drop.classList.remove('drag');
-  if (e.dataTransfer.files && e.dataTransfer.files[0]) {
-    currentFile = e.dataTransfer.files[0];
-    fname.textContent = currentFile.name;
-    if (lastBitmap && lastBitmap.close) { try { lastBitmap.close(); } catch(e){} }
-    lastBitmap = await fileToBitmap(currentFile);
-    renderAll();
-  }
-});
+        // 创建临时canvas用于降采样
+        const tempCanvas = document.createElement('canvas');
+        tempCanvas.width = dw;
+        tempCanvas.height = dh;
+        const tempCtx = tempCanvas.getContext('2d');
+        const downImg = tempCtx.createImageData(dw, dh);
+        const dst = downImg.data;
 
-fileInput.addEventListener('change', async e => {
-  currentFile = e.target.files[0] || null;
-  fname.textContent = currentFile ? currentFile.name : '';
-  if (!currentFile) return;
-  if (lastBitmap && lastBitmap.close) { try { lastBitmap.close(); } catch(e){} }
-  lastBitmap = await fileToBitmap(currentFile);
-  renderAll();
-});
+        for (let dy = 0; dy < dh; dy++) {
+          for (let dx = 0; dx < dw; dx++) {
+            const sx0 = Math.floor(dx * ratio);
+            const sy0 = Math.floor(dy * ratio);
+            const sx1 = Math.min(W, Math.ceil((dx + 1) * ratio));
+            const sy1 = Math.min(H, Math.ceil((dy + 1) * ratio));
 
-renderBtn.addEventListener('click', async () => {
-  if (!currentFile) { alert('请先选择图片'); return; }
-  if (lastBitmap && lastBitmap.close) { try { lastBitmap.close(); } catch(e){} }
-  lastBitmap = await fileToBitmap(currentFile);
-  renderAll();
-});
+            let sum = 0, count = 0;
+            for (let py = sy0; py < sy1; py++) {
+              for (let px = sx0; px < sx1; px++) {
+                const idx = (py * W + px) * 4;
+                sum += src[idx];
+                count++;
+              }
+            }
+            const avg = count > 0 ? sum / count : 255;
 
-dlPng.addEventListener('click', () => {
-  // 再次确保完全二值且不透明
-  const img = ctx.getImageData(0,0,W,H);
-  const d = img.data;
-  for (let i = 0; i < d.length; i += 4) {
-    const y = 0.299*d[i] + 0.587*d[i+1] + 0.114*d[i+2];
-    const v = y < 128 ? 0 : 255;
-    d[i] = d[i+1] = d[i+2] = v;
-    d[i+3] = 255;
-  }
-  ctx.putImageData(img,0,0);
-  const url = canvas.toDataURL('image/png');
-  const name = (currentFile?.name || 'output').replace(/\.[^.]+$/, '') + '_596x832_bw.png';
-  const a = document.createElement('a');
-  a.href = url; a.download = name; document.body.appendChild(a); a.click(); a.remove();
-});
+            // 区域平均：>128为白(#eaeaea)，<=128为黑
+            const v = avg > 128 ? 234 : 0; // 234 = 0xEA
 
-clearBtn.addEventListener('click', () => {
-  currentFile = null; fileInput.value = ''; fname.textContent = ''; info.textContent = ''; testResults.textContent='';
-  setButtons(false); ctx.clearRect(0,0,W,H); bctx.clearRect(0,0,W,H);
-});
+            const didx = (dy * dw + dx) * 4;
+            dst[didx] = dst[didx + 1] = dst[didx + 2] = v;
+            dst[didx + 3] = 255;
+          }
+        }
+        tempCtx.putImageData(downImg, 0, 0);
 
-setButtons(false);
-</script>
+        // 3. 计算居中位置（左右顶边，上下留白）
+        const scale = labelW / dw; // 缩放到标签宽度
+        const scaledH = dh * scale;
+        const offsetY = (labelH - scaledH) / 2;
+
+        // 4. 绘制降采样图片到标签中心
+        ctxDown.drawImage(tempCanvas, 0, offsetY, labelW, scaledH);
+
+        // 5. 绘制取餐号码在左上留白区域
+        if (offsetY > 30) { // 确保有足够的留白空间
+          ctxDown.fillStyle = '#000';
+          ctxDown.font = 'bold 56px system-ui, -apple-system, sans-serif';
+          ctxDown.textAlign = 'left';
+          ctxDown.textBaseline = 'top';
+          ctxDown.fillText('8188', 30, 40);
+        }
+      } else {
+        // 没有图片时也显示取餐号
+        ctxDown.fillStyle = '#000';
+        ctxDown.font = 'bold 56px system-ui, -apple-system, sans-serif';
+        ctxDown.textAlign = 'left';
+        ctxDown.textBaseline = 'top';
+        ctxDown.fillText('8188', 30, 40);
+      }
+
+      // 6. 绘制左右6%的打印误差警告区域
+      const warningWidth = labelW * 0.06;
+      ctxDown.fillStyle = 'rgba(255, 100, 100, 0.4)'; // 半透明浅红色
+
+      // 左侧警告区域
+      ctxDown.fillRect(0, 0, warningWidth, labelH);
+
+      // 右侧警告区域
+      ctxDown.fillRect(labelW - warningWidth, 0, warningWidth, labelH);
+    }
+
+    function renderAll() {
+      if (!lastBitmap) return;
+      const { imgW, imgH, realScale } = drawScaledToBuffer(lastBitmap);
+      const gray = toGrayscale();
+      applyGammaContrast(gray, parseInt(contrast.value, 10), parseFloat(gamma.value));
+
+      let bin;
+      if (mode.value === 'bayer') {
+        bin = new Uint8ClampedArray(W * H);
+        ditherBayer(gray, bin);
+      } else if (mode.value === 'fs') {
+        bin = new Uint8ClampedArray(W * H);
+        ditherFS(gray, bin, !!fsSerpentine.checked);
+      } else { // circle / square / cross 网格类
+        bin = circleHalftone(gray, parseInt(grid.value, 10), parseInt(angle.value, 10), shape.value);
+      }
+
+      if (edgeProtect.checked) {
+        applyPreserveOverlay(bin, gray, parseInt(lo.value, 10), parseInt(hi.value, 10), parseInt(tau.value, 10), parseInt(dilate.value, 10));
+      }
+
+      binToCanvas(bin);
+      downsamplePreview(); // 更新降采样预览
+      showInfo(imgW, imgH, realScale);
+      setButtons(true);
+    }
+
+
+    // ======== 交互 ========
+    function scheduleRender() {
+      if (!lastBitmap) return;
+      cancelAnimationFrame(scheduleRender._raf);
+      scheduleRender._raf = requestAnimationFrame(renderAll);
+    }
+
+    [grid, shape, angle, gamma, contrast, mode, lo, hi, tau, edgeProtect, imgScale, fsSerpentine, dilate].forEach(el => {
+      el.addEventListener('input', () => {
+        gridVal.textContent = grid.value;
+        angleVal.textContent = angle.value;
+        gammaVal.textContent = Number(gamma.value).toFixed(2);
+        contrastVal.textContent = contrast.value;
+        imgScaleVal.textContent = imgScale.value;
+        loVal.textContent = lo.value; hiVal.textContent = hi.value; tauVal.textContent = tau.value; dilateVal.textContent = dilate.value;
+        const showGrid = (mode.value === 'circle');
+        gridBlock.classList.toggle('hidden', !showGrid);
+        shapeBlock.classList.toggle('hidden', !showGrid);
+        angleBlock.classList.toggle('hidden', !showGrid);
+        fsBlock.classList.toggle('hidden', mode.value !== 'fs');
+        edgeGroup.classList.toggle('hidden', !edgeProtect.checked);
+        scheduleRender();
+      });
+    });
+
+    // 初始化可见性
+    (function initUI() {
+      const showGrid = (mode.value === 'circle');
+      gridBlock.classList.toggle('hidden', !showGrid);
+      shapeBlock.classList.toggle('hidden', !showGrid);
+      angleBlock.classList.toggle('hidden', !showGrid);
+      fsBlock.classList.toggle('hidden', mode.value !== 'fs');
+      edgeGroup.classList.toggle('hidden', !edgeProtect.checked);
+    })();
+
+    drop.addEventListener('click', () => fileInput.click());
+    drop.addEventListener('dragover', e => { e.preventDefault(); drop.classList.add('drag'); });
+    drop.addEventListener('dragleave', () => drop.classList.remove('drag'));
+    drop.addEventListener('drop', async e => {
+      e.preventDefault();
+      drop.classList.remove('drag');
+      if (e.dataTransfer.files && e.dataTransfer.files[0]) {
+        currentFile = e.dataTransfer.files[0];
+        fname.textContent = currentFile.name;
+        if (lastBitmap && lastBitmap.close) { try { lastBitmap.close(); } catch (e) { } }
+        lastBitmap = await fileToBitmap(currentFile);
+        renderAll();
+      }
+    });
+
+    fileInput.addEventListener('change', async e => {
+      currentFile = e.target.files[0] || null;
+      fname.textContent = currentFile ? currentFile.name : '';
+      if (!currentFile) return;
+      if (lastBitmap && lastBitmap.close) { try { lastBitmap.close(); } catch (e) { } }
+      lastBitmap = await fileToBitmap(currentFile);
+      renderAll();
+    });
+
+
+    dlPng.addEventListener('click', () => {
+      // 再次确保完全二值且不透明
+      const img = ctx.getImageData(0, 0, W, H);
+      const d = img.data;
+      for (let i = 0; i < d.length; i += 4) {
+        const y = 0.299 * d[i] + 0.587 * d[i + 1] + 0.114 * d[i + 2];
+        const v = y < 128 ? 0 : 255;
+        d[i] = d[i + 1] = d[i + 2] = v;
+        d[i + 3] = 255;
+      }
+      ctx.putImageData(img, 0, 0);
+      const url = canvas.toDataURL('image/png');
+      const name = (currentFile?.name || 'output').replace(/\.[^.]+$/, '') + '_596x832_bw.png';
+      const a = document.createElement('a');
+      a.href = url; a.download = name; document.body.appendChild(a); a.click(); a.remove();
+    });
+
+    clearBtn.addEventListener('click', () => {
+      currentFile = null; fileInput.value = ''; fname.textContent = ''; info.textContent = '';
+      setButtons(false); ctx.clearRect(0, 0, W, H); bctx.clearRect(0, 0, W, H);
+      ctxDown.fillStyle = '#eaeaea';
+      ctxDown.fillRect(0, 0, canvasDown.width, canvasDown.height);
+    });
+
+    setButtons(false);
+
+    // 初始化预览canvas：显示标签背景、取餐号和警告区域
+    downsamplePreview();
+  </script>
 </body>
+
 </html>
