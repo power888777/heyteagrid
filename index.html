@@ -252,8 +252,19 @@
                   </select>
                 </div>
                 <div>
-                  <div class="top"><label>图像大小缩放（%）</label><span class="value" id="imgScaleVal">100</span></div>
+                  <div class="top"><label>图片大小缩放（%）</label><span class="value" id="imgScaleVal">100</span></div>
                   <input id="imgScale" type="range" min="25" max="300" step="1" value="100" />
+                </div>
+              </div>
+
+              <div class="cols-2">
+                <div>
+                  <div class="top"><label>图片横向偏移（像素）</label><span class="value" id="offsetXVal">0</span></div>
+                  <input id="offsetX" type="range" min="-300" max="300" step="1" value="0" />
+                </div>
+                <div>
+                  <div class="top"><label>图片纵向偏移（像素）</label><span class="value" id="offsetYVal">0</span></div>
+                  <input id="offsetY" type="range" min="-300" max="300" step="1" value="0" />
                 </div>
               </div>
 
@@ -322,7 +333,7 @@
 
           <div class="actions">
             <button id="dlPng" disabled>我调好啦，下载PNG图片</button>
-            <button id="clearBtn" style="margin-left:auto;">清空</button>
+            <button id="resetBtn" style="margin-left:auto;">重置所有选项为默认</button>
           </div>
           <p class="meta"></p>
         </div>
@@ -362,7 +373,7 @@
     const canvasDown = document.getElementById('canvasDown');
     const ctxDown = canvasDown.getContext('2d');
     const dlPng = document.getElementById('dlPng');
-    const clearBtn = document.getElementById('clearBtn');
+    const resetBtn = document.getElementById('resetBtn');
     const info = document.getElementById('info');
 
     const mode = document.getElementById('mode');
@@ -375,12 +386,16 @@
     const gamma = document.getElementById('gamma');
     const contrast = document.getElementById('contrast');
     const imgScale = document.getElementById('imgScale');
+    const offsetX = document.getElementById('offsetX');
+    const offsetY = document.getElementById('offsetY');
 
     const gridVal = document.getElementById('gridVal');
     const angleVal = document.getElementById('angleVal');
     const gammaVal = document.getElementById('gammaVal');
     const contrastVal = document.getElementById('contrastVal');
     const imgScaleVal = document.getElementById('imgScaleVal');
+    const offsetXVal = document.getElementById('offsetXVal');
+    const offsetYVal = document.getElementById('offsetYVal');
 
     const edgeProtect = document.getElementById('edgeProtect');
     const edgeGroup = document.getElementById('edgeGroup');
@@ -403,6 +418,10 @@
     const buf = document.createElement('canvas');
     buf.width = W; buf.height = H;
     const bctx = buf.getContext('2d', { willReadFrequently: true });
+
+    // 加载logo图标用于打印预览右下角
+    const logoImage = new Image();
+    logoImage.src = 'data:img/png;base64,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'; // ← 在这里粘贴您的图片数据
 
     function setButtons(enabled) { dlPng.disabled = !enabled; }
 
@@ -438,8 +457,14 @@
       const scale = base * factor;
       const newW = imgW * scale;
       const newH = imgH * scale;
-      const offsetX = (W - newW) / 2;
-      const offsetY = (H - newH) / 2;
+      const centerOffsetX = (W - newW) / 2;
+      const centerOffsetY = (H - newH) / 2;
+
+      // 添加用户设置的偏移值
+      const userOffsetX = parseInt(offsetX.value, 10);
+      const userOffsetY = parseInt(offsetY.value, 10);
+      const finalOffsetX = centerOffsetX + userOffsetX;
+      const finalOffsetY = centerOffsetY + userOffsetY;
 
       bctx.save();
       bctx.setTransform(1, 0, 0, 1, 0, 0);
@@ -447,7 +472,7 @@
       bctx.fillRect(0, 0, W, H);
       bctx.imageSmoothingEnabled = true;
       bctx.imageSmoothingQuality = 'high';
-      bctx.drawImage(bitmap, offsetX, offsetY, newW, newH);
+      bctx.drawImage(bitmap, finalOffsetX, finalOffsetY, newW, newH);
       bctx.restore();
 
       return { imgW, imgH, realScale: scale };
@@ -766,11 +791,27 @@
       const warningWidth = labelW * 0.06;
       ctxDown.fillStyle = 'rgba(255, 100, 100, 0.4)'; // 半透明浅红色
 
+
+
       // 左侧警告区域
       ctxDown.fillRect(0, 0, warningWidth, labelH);
 
+
       // 右侧警告区域
       ctxDown.fillRect(labelW - warningWidth, 0, warningWidth, labelH);
+
+      // 7. 在右下角绘制logo
+      if (logoImage.complete && logoImage.naturalWidth > 0) {
+        const logoWidth = 50;  // logo宽度
+        const logoHeight = 57; // logo高度（保持89:101的比例）
+        const padding = 30;    // 距离边缘的间距
+        ctxDown.drawImage(logoImage,
+          labelW - logoWidth - padding,  // x位置（右下角）
+          labelH - logoHeight - padding, // y位置（右下角）
+          logoWidth,
+          logoHeight
+        );
+      }
     }
 
     function renderAll() {
@@ -808,13 +849,15 @@
       scheduleRender._raf = requestAnimationFrame(renderAll);
     }
 
-    [grid, shape, angle, gamma, contrast, mode, lo, hi, tau, edgeProtect, imgScale, fsSerpentine, dilate].forEach(el => {
+    [grid, shape, angle, gamma, contrast, mode, lo, hi, tau, edgeProtect, imgScale, offsetX, offsetY, fsSerpentine, dilate].forEach(el => {
       el.addEventListener('input', () => {
         gridVal.textContent = grid.value;
         angleVal.textContent = angle.value;
         gammaVal.textContent = Number(gamma.value).toFixed(2);
         contrastVal.textContent = contrast.value;
         imgScaleVal.textContent = imgScale.value;
+        offsetXVal.textContent = offsetX.value;
+        offsetYVal.textContent = offsetY.value;
         loVal.textContent = lo.value; hiVal.textContent = hi.value; tauVal.textContent = tau.value; dilateVal.textContent = dilate.value;
         const showGrid = (mode.value === 'circle');
         gridBlock.classList.toggle('hidden', !showGrid);
@@ -878,11 +921,49 @@
       a.href = url; a.download = name; document.body.appendChild(a); a.click(); a.remove();
     });
 
-    clearBtn.addEventListener('click', () => {
-      currentFile = null; fileInput.value = ''; fname.textContent = ''; info.textContent = '';
-      setButtons(false); ctx.clearRect(0, 0, W, H); bctx.clearRect(0, 0, W, H);
-      ctxDown.fillStyle = '#eaeaea';
-      ctxDown.fillRect(0, 0, canvasDown.width, canvasDown.height);
+    resetBtn.addEventListener('click', () => {
+      // 重置所有参数为默认值，但保留图片
+      mode.value = 'circle';
+      imgScale.value = '100';
+      offsetX.value = '0';
+      offsetY.value = '0';
+      shape.value = 'circle';
+      grid.value = '4';
+      angle.value = '45';
+      gamma.value = '1.00';
+      contrast.value = '0';
+      edgeProtect.checked = false;
+      lo.value = '40';
+      hi.value = '120';
+      tau.value = '60';
+      dilate.value = '0';
+      fsSerpentine.checked = true;
+
+      // 更新显示值
+      gridVal.textContent = grid.value;
+      angleVal.textContent = angle.value;
+      gammaVal.textContent = Number(gamma.value).toFixed(2);
+      contrastVal.textContent = contrast.value;
+      imgScaleVal.textContent = imgScale.value;
+      offsetXVal.textContent = offsetX.value;
+      offsetYVal.textContent = offsetY.value;
+      loVal.textContent = lo.value;
+      hiVal.textContent = hi.value;
+      tauVal.textContent = tau.value;
+      dilateVal.textContent = dilate.value;
+
+      // 更新UI显示
+      const showGrid = (mode.value === 'circle');
+      gridBlock.classList.toggle('hidden', !showGrid);
+      shapeBlock.classList.toggle('hidden', !showGrid);
+      angleBlock.classList.toggle('hidden', !showGrid);
+      fsBlock.classList.toggle('hidden', mode.value !== 'fs');
+      edgeGroup.classList.toggle('hidden', !edgeProtect.checked);
+
+      // 如果有图片，重新渲染
+      if (lastBitmap) {
+        renderAll();
+      }
     });
 
     setButtons(false);
